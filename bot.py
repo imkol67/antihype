@@ -1,6 +1,3 @@
-# bot.py
-# pip install aiogram==3.13.1 aiosqlite aiohttp
-
 import asyncio
 import logging
 import os
@@ -17,12 +14,9 @@ from aiogram.types import (
     CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
 )
 
-# ==================== НАСТРОЙКИ ====================
-# Берем токен из переменных окружения (безопасно!)
 BOT_TOKEN = os.environ.get("BOT_TOKEN")
 DB_PATH = "bot.db"
 
-# ==================== ТЕКСТЫ ====================
 WELCOME_TEXT = (
     "Здравствуйте! 👋\n"
     "Это бот для анонимной обратной связи и подачи анкет.\n\n"
@@ -63,13 +57,11 @@ CHECKER = [
     "Ваш юз.",
 ]
 
-# ==================== FSM ====================
 class Anketa(StatesGroup):
     choosing_action = State()
     choosing_role = State()
     answering = State()
 
-# ==================== БД ====================
 async def db_init():
     async with aiosqlite.connect(DB_PATH) as db:
         await db.execute("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)")
@@ -110,7 +102,6 @@ async def get_user_by_msg(group_msg_id: int) -> int | None:
         row = await cur.fetchone()
         return row[0] if row else None
 
-# ==================== РОУТЕР ====================
 logging.basicConfig(level=logging.INFO)
 router = Router()
 
@@ -270,24 +261,20 @@ async def user_message(message: Message, state: FSMContext, bot: Bot):
     await set_ticket(user_id, sent.message_id)
     await message.answer("✉️ Ваше сообщение отправлено администрации. Ожидайте ответа!")
 
-# ==================== ЗАПУСК ====================
 async def main():
     await db_init()
     
-    # --- ЗАГЛУШКА ДЛЯ RENDER (веб-сервер) ---
     async def handle(request):
         return web.Response(text="Bot is running!")
     
     app = web.Application()
     app.router.add_get('/', handle)
     
-    # Render сам передаст нужный порт
     port = int(os.environ.get("PORT", 8080))
     runner = web.AppRunner(app)
     await runner.setup()
     site = web.TCPSite(runner, '0.0.0.0', port)
     await site.start()
-    # ---------------------------------------
 
     bot = Bot(BOT_TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     dp = Dispatcher(storage=MemoryStorage())
@@ -297,5 +284,5 @@ async def main():
     print("Бот запущен и заглушка работает!")
     await dp.start_polling(bot)
 
-if __name__ == "__main__":
+if name == "main":
     asyncio.run(main())
